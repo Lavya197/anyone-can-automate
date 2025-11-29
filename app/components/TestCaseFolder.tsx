@@ -54,7 +54,7 @@ export default function TestCaseFolder({
             padding: "10px",
             borderRadius: "8px",
             background: "rgba(255,255,255,0.5)",
-            maxHeight: "350px",
+            maxHeight: "290px",
             overflowY: "auto",
           }}
         >

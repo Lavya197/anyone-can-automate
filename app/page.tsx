@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import Lane from "./components/Lane";
@@ -9,6 +9,10 @@ import StepDetailsPanel from "./components/StepDetailsPanel";
 import VariablesPanel from "./components/VariablesPanel";
 import ElementsPanel from "./components/ElementsPanel";
 import ScriptDownloadModal from "./components/ScriptDownloadModal";
+
+import BugReportModal from "./components/forms/BugReportModal";
+import EnhancementModal from "./components/forms/EnhancementModal";
+import ContactModal from "./components/forms/ContactModal";
 
 import { generatePythonScript } from "./utils/scriptGenerator";
 
@@ -47,12 +51,16 @@ export interface ElementType {
 // ------------------------------------------------
 
 export default function Home() {
+  const [walkthroughOpen, setWalkthroughOpen] = useState(false);
+
   const [lanes, setLanes] = useState<LaneType[]>([]);
   const [steps, setSteps] = useState<Record<string, StepType[]>>({});
   const [hiddenLanes, setHiddenLanes] = useState<LaneType[]>([]);
 
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [activeLaneForPicker, setActiveLaneForPicker] = useState<string | null>(null);
+  const [activeLaneForPicker, setActiveLaneForPicker] = useState<string | null>(
+    null
+  );
 
   const [selectedStepRef, setSelectedStepRef] = useState<{
     laneId: string;
@@ -68,6 +76,21 @@ export default function Home() {
   const [elementsOpen, setElementsOpen] = useState(false);
 
   const [scriptModalOpen, setScriptModalOpen] = useState(false);
+
+  // === Newly Added States for Forms ===
+  const [bugModal, setBugModal] = useState(false);
+  const [enhModal, setEnhModal] = useState(false);
+  const [contactModal, setContactModal] = useState(false);
+
+  // ---------------------------
+  // Walkthrough
+  // ---------------------------
+  useEffect(() => {
+    const hide = localStorage.getItem("hideWalkthrough");
+    if (!hide) {
+      setWalkthroughOpen(true);
+    }
+  }, []);
 
   // -----------------------------------------------
   // Lane actions
@@ -109,7 +132,9 @@ export default function Home() {
   };
 
   const renameHiddenLane = (id: string, newName: string) => {
-    setHiddenLanes(hiddenLanes.map((l) => (l.id === id ? { ...l, name: newName } : l)));
+    setHiddenLanes(
+      hiddenLanes.map((l) => (l.id === id ? { ...l, name: newName } : l))
+    );
   };
 
   const deleteLane = (id: string) => {
@@ -204,7 +229,10 @@ export default function Home() {
     return laneSteps.find((s) => s.id === selectedStepRef.stepId) || null;
   })();
 
-  const handleSaveStepConfig = (config: Record<string, any>, newSummary?: string) => {
+  const handleSaveStepConfig = (
+    config: Record<string, any>,
+    newSummary?: string
+  ) => {
     if (!selectedStepRef) return;
 
     const { laneId, stepId } = selectedStepRef;
@@ -306,10 +334,23 @@ export default function Home() {
         onOpenVariables={() => setVariablesOpen(true)}
         onOpenElements={() => setElementsOpen(true)}
         onDownloadScript={handleDownloadScript}
+        onShowWalkthrough={() => setWalkthroughOpen(true)}
       />
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <Topbar />
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
+        {/* UPDATED TOPBAR WITH CALLBACKS */}
+        <Topbar
+          onOpenBug={() => setBugModal(true)}
+          onOpenEnhancement={() => setEnhModal(true)}
+          onOpenContact={() => setContactModal(true)}
+        />
 
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="board" direction="horizontal" type="LANE">
@@ -396,15 +437,14 @@ export default function Home() {
         elements={elements}
         onClose={() => setElementsOpen(false)}
         onAdd={(e) =>
-  setElements([
-    ...elements,
-    {
-      id: Date.now(),
-      ...e,
-    } as ElementType,
-  ])
-}
-
+          setElements([
+            ...elements,
+            {
+              id: Date.now(),
+              ...e,
+            } as ElementType,
+          ])
+        }
         onDelete={(id) =>
           setElements(elements.filter((x) => x.id !== id))
         }
@@ -415,6 +455,11 @@ export default function Home() {
         onClose={() => setScriptModalOpen(false)}
         onGenerate={handleGenerateScript}
       />
+
+      {/* NEW FORMS */}
+      <BugReportModal open={bugModal} onClose={() => setBugModal(false)} />
+      <EnhancementModal open={enhModal} onClose={() => setEnhModal(false)} />
+      <ContactModal open={contactModal} onClose={() => setContactModal(false)} />
     </div>
   );
 }

@@ -309,7 +309,11 @@ function buildMainBlock(functionNames: string[]): string[] {
   lines.push(`#                    MAIN EXECUTION`);
   lines.push(`# ====================================================`);
   lines.push(`if __name__ == "__main__":`);
-  lines.push(indent(`driver = webdriver.Chrome(ChromeDriverManager().install())`));
+
+  // 🟢 UPDATED SELENIUM 4 DRIVER INITIALIZATION
+  lines.push(indent(`from selenium.webdriver.chrome.service import Service`, 1));
+  lines.push(indent(`driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))`, 1));
+
   lines.push(indent(`try:`));
   if (functionNames.length === 0) {
     lines.push(indent(`print("No test cases defined.")`, 2));
@@ -318,11 +322,13 @@ function buildMainBlock(functionNames: string[]): string[] {
       lines.push(indent(`${fn}(driver)`, 2));
     });
   }
+
   lines.push(indent(`finally:`));
   lines.push(indent(`driver.quit()`, 2));
   lines.push(``);
   return lines;
 }
+
 
 export function generatePythonScript(
   state: BuilderState,

@@ -21,6 +21,9 @@ export interface SidebarProps {
   onOpenVariables: () => void;
   onOpenElements: () => void;
   onDownloadScript: () => void;
+
+  // ⭐ NEW: Walkthrough button handler
+  onShowWalkthrough: () => void;
 }
 
 // ------------------------------------------------------
@@ -35,9 +38,11 @@ export default function Sidebar({
   onOpenVariables,
   onOpenElements,
   onDownloadScript,
+  onShowWalkthrough,
 }: SidebarProps) {
   return (
     <div
+      id="sidebar-root"
       style={{
         width: "250px",
         background: "rgba(255,255,255,0.6)",
@@ -47,6 +52,10 @@ export default function Sidebar({
         display: "flex",
         flexDirection: "column",
         overflowY: "auto",
+
+        // ⭐ crucial fix
+        position: "relative",
+        height: "100vh",
       }}
     >
       {/* === LOGO === */}
@@ -61,6 +70,7 @@ export default function Sidebar({
         <img
           src="/logo.png"
           alt="Logo"
+          id="logo-highlight"
           style={{
             width: "180px",
             height: "auto",
@@ -70,30 +80,53 @@ export default function Sidebar({
         />
       </div>
 
-      <button className="side-btn" onClick={onAddLane}>
+      {/* === BUTTONS === */}
+      <button id="btn-add-testcase" className="side-btn" onClick={onAddLane}>
         + Add Test Case
       </button>
 
-      <button className="side-btn" onClick={onOpenVariables}>
+      <button id="btn-open-variables" className="side-btn" onClick={onOpenVariables}>
         Variables
       </button>
 
-      <button className="side-btn" onClick={onOpenElements}>
+      <button id="btn-open-elements" className="side-btn" onClick={onOpenElements}>
         Elements
       </button>
 
-      <button className="side-btn" onClick={onDownloadScript}>
+      <button id="btn-download-script" className="side-btn" onClick={onDownloadScript}>
         Download Script
       </button>
 
+      <button
+        id="btn-open-walkthrough"
+        className="side-btn"
+        style={{ marginTop: "10px", background: "#eef3ff" }}
+        onClick={onShowWalkthrough}
+      >
+        Restart Walkthrough
+      </button>
+
+      {/* === TEST CASE FOLDER === */}
       <TestCaseFolder
         hiddenLanes={hiddenLanes}
         onRestore={onRestoreLane}
         onRenameHidden={onRenameHidden}
       />
 
-      <div style={{ flex: 1 }} />
-      <div style={{ textAlign: "center", color: "#777" }}>v1.0</div>
+      {/* ⭐ Pushes version tag to TRUE bottom */}
+      <div style={{ marginTop: "auto" }} />
+
+      {/* === VERSION BOX === */}
+      <div
+        style={{
+          textAlign: "center",
+          color: "#777",
+          paddingTop: "10px",
+          paddingBottom: "10px",
+        }}
+      >
+        v1.1
+      </div>
     </div>
   );
 }
