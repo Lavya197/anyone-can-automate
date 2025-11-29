@@ -16,8 +16,9 @@ export default function FieldBuilder({
   elements: { id: number; name: string; locatorType: string; locatorValue: string }[];
   onChange: (id: string, value: any) => void;
 }) {
-  const [showVarPicker, setShowVarPicker] = useState(null);
-  const [showElementPicker, setShowElementPicker] = useState(null);
+  const [showVarPicker, setShowVarPicker] = useState<string | null>(null);
+const [showElementPicker, setShowElementPicker] = useState<string | null>(null);
+
 
   const isLocatorField = (field: FieldDef) =>
     field.id === "locatorType" || field.id === "locatorValue";

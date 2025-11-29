@@ -6,6 +6,44 @@ import FieldBuilder from "./FieldBuilder";
 import { getActionSchema } from "../utils/actionSchemas";
 import { ACTION_CATALOG } from "../utils/actionCatalog";
 
+// ------------------------------------------------------
+// TYPES
+// ------------------------------------------------------
+export interface VariableDef {
+  id: number;
+  name: string;
+  value: string;
+}
+
+export interface ElementDef {
+  id: number;
+  name: string;
+  locatorType: string;
+  locatorValue: string;
+}
+
+export interface StepDef {
+  id: string;
+  action: string;
+  summary: string;
+  category?: string;
+  actionKey?: string;
+  config?: Record<string, any>;
+}
+
+export interface StepDetailsPanelProps {
+  open: boolean;
+  step: StepDef | null;
+  variables: VariableDef[];
+  elements: ElementDef[];
+  onClose: () => void;
+  onSave: (config: Record<string, any>, newSummary?: string) => void;
+}
+
+// ------------------------------------------------------
+// COMPONENT
+// ------------------------------------------------------
+
 export default function StepDetailsPanel({
   open,
   step,
@@ -13,8 +51,8 @@ export default function StepDetailsPanel({
   elements,
   onClose,
   onSave,
-}) {
-  const [values, setValues] = useState({});
+}: StepDetailsPanelProps) {
+  const [values, setValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (step) setValues(step.config || {});
@@ -23,13 +61,14 @@ export default function StepDetailsPanel({
   if (!open || !step) return null;
 
   const action = ACTION_CATALOG.find((a) => a.id === step.actionKey);
-  const schema = getActionSchema(step.actionKey);
+  const schema = getActionSchema(step.actionKey ?? "");
 
-  const handleChange = (id, value) => {
+
+  const handleChange = (id: string, value: any) => {
     setValues((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSave = () => {
+  const handleSaveClick = () => {
     let newSummary = step.summary;
 
     if (values.locatorValue) {
@@ -132,7 +171,7 @@ export default function StepDetailsPanel({
           </button>
 
           <button
-            onClick={handleSave}
+            onClick={handleSaveClick}
             style={{
               padding: "7px 16px",
               borderRadius: "6px",

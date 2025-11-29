@@ -3,14 +3,29 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 
+type ElementEntry = {
+  id?: number | string;
+  name: string;
+  locatorType: string;
+  locatorValue: string;
+};
+
+type ElementsPanelProps = {
+  open: boolean;
+  elements: ElementEntry[];
+  onClose: () => void;
+  onAdd: (entry: ElementEntry) => void;
+  onDelete: (id: number | string) => void;
+};
+
 export default function ElementsPanel({
   open,
   elements,
   onClose,
   onAdd,
   onDelete,
-}) {
-  const [entry, setEntry] = useState({
+}: ElementsPanelProps) {
+  const [entry, setEntry] = useState<ElementEntry>({
     name: "",
     locatorType: "css",
     locatorValue: "",
@@ -69,7 +84,7 @@ export default function ElementsPanel({
               </div>
 
               <button
-                onClick={() => onDelete(e.id)}
+                onClick={() => onDelete(e.id!)}
                 style={{
                   marginTop: "6px",
                   border: "none",
@@ -89,9 +104,7 @@ export default function ElementsPanel({
           <input
             placeholder="Element Name"
             value={entry.name}
-            onChange={(e) =>
-              setEntry({ ...entry, name: e.target.value })
-            }
+            onChange={(e) => setEntry({ ...entry, name: e.target.value })}
             style={{
               width: "100%",
               marginBottom: "6px",

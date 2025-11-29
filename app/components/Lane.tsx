@@ -5,6 +5,51 @@ import { Droppable, Draggable } from "@hello-pangea/dnd";
 import StepCard from "./StepCard";
 import { motion, useAnimation } from "framer-motion";
 
+// ------------------------------------------------------
+// TYPES
+// ------------------------------------------------------
+
+export interface Step {
+  id: string;
+  action: string;
+  summary: string;
+  category?: string;
+  actionKey?: string;
+  config?: any;
+}
+
+export interface LaneType {
+  id: string;
+  name: string;
+  isHiding?: boolean;
+  isRestored?: boolean;
+}
+
+export interface LaneProps {
+  lane: LaneType;
+  index: number;
+  steps: Step[];
+
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  onAddStep: (laneId: string) => void;
+
+  onHideRequest: (id: string) => void;
+  onHideComplete: (id: string) => void;
+
+  isHiding: boolean;
+  isRestored: boolean;
+
+  onStepClick: (laneId: string, stepId: string) => void;
+
+  // NEW: delete button inside step
+  onDeleteStep: (laneId: string, stepId: string) => void;
+}
+
+// ------------------------------------------------------
+// COMPONENT
+// ------------------------------------------------------
+
 export default function Lane({
   lane,
   index,
@@ -17,8 +62,8 @@ export default function Lane({
   isHiding,
   isRestored,
   onStepClick,
-  onDeleteStep, // 🔹 NEW
-}) {
+  onDeleteStep,
+}: LaneProps) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(lane.name);
 
@@ -34,6 +79,7 @@ export default function Lane({
     });
   }, []);
 
+  // ----- Hide animation -----
   useEffect(() => {
     if (!isHiding) return;
 
@@ -44,18 +90,12 @@ export default function Lane({
         y: 90,
         rotate: -6,
         opacity: 0,
-        transition: {
-          type: "spring",
-          stiffness: 260,
-          damping: 22,
-          mass: 0.45,
-        },
+        transition: { type: "spring", stiffness: 260, damping: 22, mass: 0.45 },
       })
-      .then(() => {
-        onHideComplete(lane.id);
-      });
+      .then(() => onHideComplete(lane.id));
   }, [isHiding, controls, lane.id, onHideComplete]);
 
+  // ----- Restore animation -----
   useEffect(() => {
     if (!isRestored) return;
 
@@ -74,10 +114,7 @@ export default function Lane({
         x: -15,
         y: -10,
         rotate: -2,
-        transition: {
-          duration: 0.25,
-          ease: "easeOut",
-        },
+        transition: { duration: 0.25, ease: "easeOut" },
       });
 
       controls.start({
@@ -86,11 +123,7 @@ export default function Lane({
         x: 0,
         y: 0,
         rotate: 0,
-        transition: {
-          type: "spring",
-          stiffness: 260,
-          damping: 20,
-        },
+        transition: { type: "spring", stiffness: 260, damping: 20 },
       });
     };
 
@@ -101,6 +134,10 @@ export default function Lane({
     setEditing(false);
     onRename(lane.id, name);
   };
+
+  // ------------------------------------------------------
+  // RENDER
+  // ------------------------------------------------------
 
   return (
     <Draggable draggableId={lane.id} index={index}>
@@ -121,12 +158,10 @@ export default function Lane({
             display: "flex",
             flexDirection: "column",
             maxHeight: "85vh",
-
-            // 🔥 FIX: remove scroll from outer div
-            overflow: "hidden",
+            overflow: "hidden", // fixed header
           }}
         >
-          {/* === FIXED HEADER === */}
+          {/* HEADER */}
           <div
             {...provided.dragHandleProps}
             style={{
@@ -189,7 +224,7 @@ export default function Lane({
             </div>
           </div>
 
-          {/* === SCROLLABLE STEPS LIST === */}
+          {/* STEPS SCROLL ZONE */}
           <Droppable droppableId={lane.id} type="STEP">
             {(providedDrop) => (
               <div
@@ -219,12 +254,13 @@ export default function Lane({
                     )}
                   </Draggable>
                 ))}
+
                 {providedDrop.placeholder}
               </div>
             )}
           </Droppable>
 
-          {/* === FIXED ADD STEP BUTTON === */}
+          {/* ADD STEP BUTTON */}
           <button
             onClick={() => onAddStep(lane.id)}
             style={{

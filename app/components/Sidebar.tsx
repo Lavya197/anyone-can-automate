@@ -2,6 +2,31 @@
 
 import TestCaseFolder from "./TestCaseFolder";
 
+// ------------------------------------------------------
+// TYPES
+// ------------------------------------------------------
+export interface HiddenLane {
+  id: string;
+  name: string;
+}
+
+export interface SidebarProps {
+  onAddLane: () => void;
+
+  hiddenLanes: HiddenLane[];
+
+  onRestoreLane: (id: string) => void;
+  onRenameHidden: (id: string, newName: string) => void;
+
+  onOpenVariables: () => void;
+  onOpenElements: () => void;
+  onDownloadScript: () => void;
+}
+
+// ------------------------------------------------------
+// COMPONENT
+// ------------------------------------------------------
+
 export default function Sidebar({
   onAddLane,
   hiddenLanes,
@@ -10,7 +35,7 @@ export default function Sidebar({
   onOpenVariables,
   onOpenElements,
   onDownloadScript,
-}) {
+}: SidebarProps) {
   return (
     <div
       style={{
@@ -24,7 +49,7 @@ export default function Sidebar({
         overflowY: "auto",
       }}
     >
-      {/* === LOGO IMAGE === */}
+      {/* === LOGO === */}
       <div
         style={{
           width: "100%",
@@ -34,8 +59,7 @@ export default function Sidebar({
         }}
       >
         <img
-          src="/logo.png
-" // ← PUT YOUR IMAGE URL HERE
+          src="/logo.png"
           alt="Logo"
           style={{
             width: "180px",

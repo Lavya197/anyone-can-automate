@@ -15,24 +15,58 @@ import { generatePythonScript } from "./utils/scriptGenerator";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import type { ActionDef } from "./utils/actionCatalog";
 
+// -------------------- TYPES --------------------
+export interface LaneType {
+  id: string;
+  name: string;
+  isHiding?: boolean;
+  isRestored?: boolean;
+}
+
+export interface StepType {
+  id: string;
+  action: string;
+  summary: string;
+  category?: string;
+  actionKey?: string;
+  config?: Record<string, any>;
+}
+
+export interface VariablesType {
+  id: number;
+  name: string;
+  value: string;
+}
+
+export interface ElementType {
+  id: number;
+  name: string;
+  locatorType: string;
+  locatorValue: string;
+}
+// ------------------------------------------------
+
 export default function Home() {
-  const [lanes, setLanes] = useState([]);
-  const [steps, setSteps] = useState({});
-  const [hiddenLanes, setHiddenLanes] = useState([]);
+  const [lanes, setLanes] = useState<LaneType[]>([]);
+  const [steps, setSteps] = useState<Record<string, StepType[]>>({});
+  const [hiddenLanes, setHiddenLanes] = useState<LaneType[]>([]);
 
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [activeLaneForPicker, setActiveLaneForPicker] = useState(null);
+  const [activeLaneForPicker, setActiveLaneForPicker] = useState<string | null>(null);
 
-  const [selectedStepRef, setSelectedStepRef] = useState(null);
+  const [selectedStepRef, setSelectedStepRef] = useState<{
+    laneId: string;
+    stepId: string;
+  } | null>(null);
+
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const [variables, setVariables] = useState([]);
-  const [elements, setElements] = useState([]);
+  const [variables, setVariables] = useState<VariablesType[]>([]);
+  const [elements, setElements] = useState<ElementType[]>([]);
 
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [elementsOpen, setElementsOpen] = useState(false);
 
-  // 🔹 Phase 7: Script download modal
   const [scriptModalOpen, setScriptModalOpen] = useState(false);
 
   // -----------------------------------------------
@@ -45,21 +79,24 @@ export default function Home() {
     };
 
     const allNames = [
-      ...lanes.map((l: any) => l.name),
-      ...hiddenLanes.map((l: any) => l.name),
+      ...lanes.map((l) => l.name),
+      ...hiddenLanes.map((l) => l.name),
     ];
 
     const maxNum = allNames
-      .map(getNumber)
+      .map((n) => getNumber(n))
       .reduce((a, b) => Math.max(a, b), 0);
 
     const nextNumber = maxNum + 1;
     const id = "lane-" + Date.now();
 
-    setLanes([
-      ...lanes,
-      { id, name: `Test Case ${nextNumber}`, isHiding: false },
-    ]);
+    const newLane: LaneType = {
+      id,
+      name: `Test Case ${nextNumber}`,
+      isHiding: false,
+    };
+
+    setLanes([...lanes, newLane]);
 
     setSteps({
       ...steps,
@@ -68,22 +105,16 @@ export default function Home() {
   };
 
   const renameLane = (id: string, newName: string) => {
-    setLanes(
-      lanes.map((l: any) => (l.id === id ? { ...l, name: newName } : l))
-    );
+    setLanes(lanes.map((l) => (l.id === id ? { ...l, name: newName } : l)));
   };
 
   const renameHiddenLane = (id: string, newName: string) => {
-    setHiddenLanes(
-      hiddenLanes.map((l: any) =>
-        l.id === id ? { ...l, name: newName } : l
-      )
-    );
+    setHiddenLanes(hiddenLanes.map((l) => (l.id === id ? { ...l, name: newName } : l)));
   };
 
   const deleteLane = (id: string) => {
-    setLanes(lanes.filter((l: any) => l.id !== id));
-    const copy: any = { ...steps };
+    setLanes(lanes.filter((l) => l.id !== id));
+    const copy = { ...steps };
     delete copy[id];
     setSteps(copy);
   };
@@ -92,38 +123,35 @@ export default function Home() {
   // Hide lane → folder
   // -----------------------------------------------
   const requestHideLane = (id: string) => {
-    setLanes(
-      lanes.map((l: any) => (l.id === id ? { ...l, isHiding: true } : l))
-    );
+    setLanes(lanes.map((l) => (l.id === id ? { ...l, isHiding: true } : l)));
   };
 
   const completeHideLane = (id: string) => {
-    const lane: any = lanes.find((l: any) => l.id === id);
+    const lane = lanes.find((l) => l.id === id);
     if (!lane) return;
 
     setHiddenLanes([...hiddenLanes, { id: lane.id, name: lane.name }]);
-    setLanes(lanes.filter((l: any) => l.id !== id));
+    setLanes(lanes.filter((l) => l.id !== id));
   };
 
   const restoreLane = (id: string) => {
-    const lane: any = hiddenLanes.find((l: any) => l.id === id);
+    const lane = hiddenLanes.find((l) => l.id === id);
     if (!lane) return;
 
-    setHiddenLanes(hiddenLanes.filter((l: any) => l.id !== id));
+    setHiddenLanes(hiddenLanes.filter((l) => l.id !== id));
 
-    setLanes([
-      ...lanes,
-      {
-        id: lane.id,
-        name: lane.name,
-        isHiding: false,
-        isRestored: true,
-      },
-    ]);
+    const restored: LaneType = {
+      id: lane.id,
+      name: lane.name,
+      isHiding: false,
+      isRestored: true,
+    };
+
+    setLanes([...lanes, restored]);
 
     setTimeout(() => {
-      setLanes((current: any[]) =>
-        current.map((l: any) =>
+      setLanes((current) =>
+        current.map((l) =>
           l.id === lane.id ? { ...l, isRestored: false } : l
         )
       );
@@ -142,9 +170,9 @@ export default function Home() {
     if (!activeLaneForPicker) return;
 
     const laneId = activeLaneForPicker;
-    const laneSteps = (steps as any)[laneId] || [];
+    const laneSteps = steps[laneId] || [];
 
-    const newStep = {
+    const newStep: StepType = {
       id: "step-" + Date.now(),
       action: action.name,
       summary: action.description,
@@ -154,7 +182,7 @@ export default function Home() {
     };
 
     setSteps({
-      ...(steps as any),
+      ...steps,
       [laneId]: [...laneSteps, newStep],
     });
 
@@ -172,24 +200,22 @@ export default function Home() {
   // -----------------------------------------------
   const selectedStep = (() => {
     if (!selectedStepRef) return null;
-    const laneSteps = (steps as any)[selectedStepRef.laneId] || [];
-    return laneSteps.find((s: any) => s.id === selectedStepRef.stepId) || null;
+    const laneSteps = steps[selectedStepRef.laneId] || [];
+    return laneSteps.find((s) => s.id === selectedStepRef.stepId) || null;
   })();
 
-  const handleSaveStepConfig = (config: any, newSummary?: string) => {
+  const handleSaveStepConfig = (config: Record<string, any>, newSummary?: string) => {
     if (!selectedStepRef) return;
 
     const { laneId, stepId } = selectedStepRef;
-    const laneSteps = (steps as any)[laneId] || [];
+    const laneSteps = steps[laneId] || [];
 
-    const updated = laneSteps.map((s: any) =>
-      s.id === stepId
-        ? { ...s, config, summary: newSummary || s.summary }
-        : s
+    const updated = laneSteps.map((s) =>
+      s.id === stepId ? { ...s, config, summary: newSummary || s.summary } : s
     );
 
     setSteps({
-      ...(steps as any),
+      ...steps,
       [laneId]: updated,
     });
 
@@ -214,18 +240,18 @@ export default function Home() {
       const sourceLane = result.source.droppableId;
       const destLane = result.destination.droppableId;
 
-      const sourceSteps = Array.from((steps as any)[sourceLane] || []);
+      const sourceSteps = Array.from(steps[sourceLane] || []);
       const [moved] = sourceSteps.splice(result.source.index, 1);
 
       if (sourceLane === destLane) {
         sourceSteps.splice(result.destination.index, 0, moved);
-        setSteps({ ...(steps as any), [sourceLane]: sourceSteps });
+        setSteps({ ...steps, [sourceLane]: sourceSteps });
       } else {
-        const destSteps = Array.from((steps as any)[destLane] || []);
+        const destSteps = Array.from(steps[destLane] || []);
         destSteps.splice(result.destination.index, 0, moved);
 
         setSteps({
-          ...(steps as any),
+          ...steps,
           [sourceLane]: sourceSteps,
           [destLane]: destSteps,
         });
@@ -234,11 +260,9 @@ export default function Home() {
   };
 
   // -----------------------------------------------
-  // Script Download (Phase 7)
+  // Script Download
   // -----------------------------------------------
-  const handleDownloadScript = () => {
-    setScriptModalOpen(true);
-  };
+  const handleDownloadScript = () => setScriptModalOpen(true);
 
   const triggerDownload = (filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/x-python" });
@@ -253,10 +277,10 @@ export default function Home() {
   const handleGenerateScript = (includeInstructions: boolean) => {
     const script = generatePythonScript(
       {
-        lanes: lanes as any,
-        steps: steps as any,
-        variables: variables as any,
-        elements: elements as any,
+        lanes,
+        steps,
+        variables,
+        elements,
       },
       { includeInstructions }
     );
@@ -307,32 +331,32 @@ export default function Home() {
                   </div>
                 )}
 
-                {lanes.map((lane: any, index: number) => (
+                {lanes.map((lane, index) => (
                   <Lane
-  key={lane.id}
-  lane={lane}
-  index={index}
-  steps={(steps as any)[lane.id] || []}
-  onRename={renameLane}
-  onDelete={deleteLane}
-  onAddStep={addStep}
-  onHideRequest={requestHideLane}
-  onHideComplete={completeHideLane}
-  isHiding={!!lane.isHiding}
-  isRestored={!!lane.isRestored}
-  onStepClick={(laneId: string, stepId: string) => {
-    setSelectedStepRef({ laneId, stepId });
-    setDetailsOpen(true);
-  }}
-  onDeleteStep={(laneId: string, stepId: string) => {
-    setSteps((prev: any) => {
-      const updated = (prev[laneId] || []).filter(
-        (s: any) => s.id !== stepId
-      );
-      return { ...prev, [laneId]: updated };
-    });
-  }}
-/>
+                    key={lane.id}
+                    lane={lane}
+                    index={index}
+                    steps={steps[lane.id] || []}
+                    onRename={renameLane}
+                    onDelete={deleteLane}
+                    onAddStep={addStep}
+                    onHideRequest={requestHideLane}
+                    onHideComplete={completeHideLane}
+                    isHiding={!!lane.isHiding}
+                    isRestored={!!lane.isRestored}
+                    onStepClick={(laneId: string, stepId: string) => {
+                      setSelectedStepRef({ laneId, stepId });
+                      setDetailsOpen(true);
+                    }}
+                    onDeleteStep={(laneId: string, stepId: string) => {
+                      setSteps((prev) => {
+                        const updated = (prev[laneId] || []).filter(
+                          (s) => s.id !== stepId
+                        );
+                        return { ...prev, [laneId]: updated };
+                      });
+                    }}
+                  />
                 ))}
 
                 {provided.placeholder}
@@ -357,16 +381,13 @@ export default function Home() {
         onSave={handleSaveStepConfig}
       />
 
-      {/* Variables & Elements Panels */}
       <VariablesPanel
         open={variablesOpen}
         variables={variables}
         onClose={() => setVariablesOpen(false)}
-        onAdd={(v: any) =>
-          setVariables([...variables, { id: Date.now(), ...v }])
-        }
-        onDelete={(id: number | string) =>
-          setVariables(variables.filter((x: any) => x.id !== id))
+        onAdd={(v) => setVariables([...variables, { id: Date.now(), ...v }])}
+        onDelete={(id) =>
+          setVariables(variables.filter((x) => x.id !== id))
         }
       />
 
@@ -374,15 +395,21 @@ export default function Home() {
         open={elementsOpen}
         elements={elements}
         onClose={() => setElementsOpen(false)}
-        onAdd={(e: any) =>
-          setElements([...elements, { id: Date.now(), ...e }])
-        }
-        onDelete={(id: number | string) =>
-          setElements(elements.filter((x: any) => x.id !== id))
+        onAdd={(e) =>
+  setElements([
+    ...elements,
+    {
+      id: Date.now(),
+      ...e,
+    } as ElementType,
+  ])
+}
+
+        onDelete={(id) =>
+          setElements(elements.filter((x) => x.id !== id))
         }
       />
 
-      {/* Phase 7: Script Download Modal */}
       <ScriptDownloadModal
         open={scriptModalOpen}
         onClose={() => setScriptModalOpen(false)}

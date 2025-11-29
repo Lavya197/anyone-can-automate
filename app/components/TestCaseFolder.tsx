@@ -2,11 +2,29 @@
 
 import { useState } from "react";
 
+// ----------------------------------------------
+// TYPES
+// ----------------------------------------------
+export interface HiddenLane {
+  id: string;
+  name: string;
+}
+
+export interface TestCaseFolderProps {
+  hiddenLanes: HiddenLane[];
+  onRestore: (id: string) => void;
+  onRenameHidden: (id: string, newName: string) => void;
+}
+
+// ----------------------------------------------
+// COMPONENT
+// ----------------------------------------------
+
 export default function TestCaseFolder({
   hiddenLanes,
   onRestore,
   onRenameHidden,
-}) {
+}: TestCaseFolderProps) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -31,16 +49,15 @@ export default function TestCaseFolder({
 
       {open && (
         <div
-  style={{
-    border: "1px solid #ddd",
-    padding: "10px",
-    borderRadius: "8px",
-    background: "rgba(255,255,255,0.5)",
-    maxHeight: "350px",       // ← NEW
-    overflowY: "auto",        // ← NEW
-  }}
->
-
+          style={{
+            border: "1px solid #ddd",
+            padding: "10px",
+            borderRadius: "8px",
+            background: "rgba(255,255,255,0.5)",
+            maxHeight: "350px",
+            overflowY: "auto",
+          }}
+        >
           {hiddenLanes.length === 0 && (
             <div style={{ color: "#888", fontSize: "13px" }}>
               No hidden test cases.
@@ -61,7 +78,6 @@ export default function TestCaseFolder({
                 border: "1px solid #cdd1ff",
               }}
             >
-              {/* rename in folder */}
               <input
                 value={lane.name}
                 onChange={(e) => onRenameHidden(lane.id, e.target.value)}

@@ -3,6 +3,28 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 
+// ---------------------------------------------------
+// TYPES
+// ---------------------------------------------------
+export interface VariableItem {
+  id: number | string;
+  name: string;
+  value: string;
+}
+
+export interface VariablesPanelProps {
+  open: boolean;
+  variables: VariableItem[];
+  onClose: () => void;
+  onAdd: (v: { name: string; value: string }) => void;
+  onUpdate?: (id: number | string, v: any) => void; // optional
+  onDelete: (id: number | string) => void;
+}
+
+// ---------------------------------------------------
+// COMPONENT
+// ---------------------------------------------------
+
 export default function VariablesPanel({
   open,
   variables,
@@ -10,8 +32,11 @@ export default function VariablesPanel({
   onAdd,
   onUpdate,
   onDelete,
-}) {
-  const [newVar, setNewVar] = useState({ name: "", value: "" });
+}: VariablesPanelProps) {
+  const [newVar, setNewVar] = useState<{ name: string; value: string }>({
+    name: "",
+    value: "",
+  });
 
   if (!open) return null;
 
@@ -81,6 +106,7 @@ export default function VariablesPanel({
           ))}
         </div>
 
+        {/* Footer: Add new variable */}
         <div style={{ borderTop: "1px solid #eee", paddingTop: "10px" }}>
           <input
             placeholder="Variable Name"
@@ -96,6 +122,7 @@ export default function VariablesPanel({
               borderRadius: "6px",
             }}
           />
+
           <input
             placeholder="Value"
             value={newVar.value}
